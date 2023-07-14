@@ -1,12 +1,8 @@
-# Carla
-
-
+# carla
 
 [官方文档](http://carla.org/)
 
 ## Ubuntu配置
-
-
 
 1.进入[Ubuntun官网](https://cn.ubuntu.com/download/desktop)，下载光盘映像文件.iso
 
