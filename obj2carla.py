@@ -19,12 +19,12 @@ def main():
 
     obj_lines = []
     # Load the Object
-    with open(args[1],'r') as f:
+    with open(args[1],'r',encoding='utf-8') as f:
         obj_lines = f.readlines()
 
     # Convert it into carla axis system
-    with open(args[2],'w') as w:
-        for line in carla_cola_lines:
+    with open(args[2],'w',encoding='utf-8') as w:
+        for line in obj_lines:
             if line.startswith('v '):
                 new_point = np.array(line.split()[1:], dtype=np.float64)
                 w.write(' '.join(['v', str(new_point[0]), str(new_point[2]), str(new_point[1])]) + '\n')
@@ -43,10 +43,4 @@ def main():
                 w.write(line)
 
 if __name__ == '__main__':
-
-    try:
-        main()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        print('\ndone.')
+    main()
