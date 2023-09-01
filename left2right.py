@@ -11,7 +11,7 @@ def main():
 
     args = list(sys.argv)
     if len(args) > 3 or len(args) < 2:
-        print("Usage: Usage: left2right input.obj [output.obj]")
+        print("Usage: left2right input.obj [output.obj]")
         print("[IMPORTANT] SHOULD BE USED ON CARLA AXIS SYSTEM")
         print("This will read from input.obj (left-handed axis system) then convert it into output.obj (right-handed axis system)")
         print("output.obj is optional, if left empty, this will output the result into output.obj")
