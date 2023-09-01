@@ -1,4 +1,5 @@
 # Usage: right2left input.obj [output.obj]
+# [IMPORTANT] SHOULD BE USED ON CARLA AXIS SYSTEM
 # This will read from input.obj (right-handed axis system) then convert it into output.obj (left-handed axis system)
 # output.obj is optional, if left empty, this will output the result into output.obj
 
@@ -11,6 +12,7 @@ def main():
     args = list(sys.argv)
     if len(args) > 3 or len(args) < 2:
         print("Usage: Usage: right2left input.obj [output.obj]")
+        print("[IMPORTANT] SHOULD BE USED ON CARLA AXIS SYSTEM")
         print("This will read from input.obj (right-handed axis system) then convert it into output.obj (left-handed axis system)")
         print("output.obj is optional, if left empty, this will output the result into output.obj")
         return
