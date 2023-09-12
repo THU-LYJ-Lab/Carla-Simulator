@@ -39,7 +39,7 @@ def main():
                 face = line.split()
                 for i in range(1, 4):
                     face[i] = face[i].split('/')
-                    face[i] = [str(int(x)) for x in face[i]]
+                    face[i] = [str(x) for x in face[i]]
                 w.write(' '.join(['f', '/'.join(face[1]), '/'.join(face[2]), '/'.join(face[3])]) + '\n')
             else:
                 w.write(line)
