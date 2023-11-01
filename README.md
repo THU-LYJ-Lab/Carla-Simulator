@@ -1,214 +1,97 @@
-# Carla
+## Carla
 
-[官方文档](http://carla.org/)
+[Official Document](http://carla.org/)
 
-## Ubuntu配置
+## Usage
 
-1.进入[Ubuntun官网](https://cn.ubuntu.com/download/desktop)，下载光盘映像文件.iso
+All the external Python libraries required for our dataset are listed in requirements.txt. Please note that to use all the code in our dataset, you must install and configure Carla. The link can be found above.
 
-2.下载[Win32DiskImager ](https://sourceforge.net/projects/win32diskimager/)，按照默认安装
-
-3.准备一个空的U盘（有数据提前备份，然后删除）
-
-4.打开Win32DiskImager，将下载的.iso文件写入U盘
-
-  此时U盘处于不可用的状态，失去了储存数据的功能，待安装完成可以回复。（或者使用ventoy，可以同时储存数据，但可能会损坏u盘）
-
-5.磁盘分区，给Ubuntu留至少130g的空间，当然越大越好，并且查看磁盘格式是GPT，还是MBR
-
-6.在U盘插入的情况下，关机，进入BIOS（不同电脑主板可能会不一样，可以百度查询，acer，ASUS，等大部分电脑是f2），根据之前查找的磁盘格式，设置对应的启动模式，如果是GPT则为UEFI，MBR为Legacy。
-
-7.关闭安全启动，选择boot，使用u盘进入
-
-8.按照默认，或者特定需求安装
-
-### Ubuntu 未发现WiFi适配器
-
-检查是否有无线网卡
-
-
-
-### Ubuntu 的重装
-
-插入u盘，再次进入即可。
-
-
-
-### BIOS下Secure Boot显示为灰色
-
-
-
-
-
-## 配置carla
-
-### dpkg: 处理软件包 xxx (--configure)时出错
+When using our code, we recommend using Python 3.7 as using other versions of Python may lead to compatibility issues.
 
 ```
-\#先切换到root用户
-
-sudo su         
-
- mv /var/lib/dpkg/info   /var/lib/dpkg/info_bak
-
-mkdir /var/lib/dpkg/info
-
-apt-get update && apt-get -f install 
-
-mv /var/lib/dpkg/info/*    /var/lib/dpkg/info_bak/
-
-rm -rf /var/lib/dpkg/info
-
-mv /var/lib/dpkg/info_bak /var/lib/dpkg/info
-
-
+pip3 install -r requirements.txt
 ```
 
+- ### Coordinate Transformations
 
+  Our dataset may involve multiple coordinate systems, so we provide coordinate transformation scripts in our code.
 
-### s段错误 (核心已转储)
+  `fbx2obj_axis.py` is used to convert the coordinate system of `fbx` files exported from Carla to the world coordinate system we use;
 
-在下载预编译文件时
+  `left2right.py` and `right2left.py` are used to convert between left-handed and right-handed coordinate systems;
 
-```
-wget https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/Dev/CARLA_Latest.tar.gz
-```
+  `carla2obj.py` and `obj2carla.py` are used to convert between our world coordinate system and the coordinate system of obj files exported from Carla.
 
-到99%时报错，s段错误 (核心已转储)，但是后续无影响。
+- ### Data Export
 
-原因未知
+  We provide `path.txt`, which contains all the routes in our dataset (note: frame counts may not be accurate as we made minor adjustments to frame counts based on route length);
 
+  We provide `export.py` for exporting data. Please make sure you have Carla properly configured when running it, and it will export data to the `data/` directory in the same folder.
 
+  If you need to modify the routes and frame counts in export.py, please refer to lines `341, 353, 423` in the code.
 
-### fatal: unable to access 'https://github.com/xxx': Failed to connect to github.com port 443: Operation timed out
+  We provide `fbx2obj.py`, which is used to convert `fbx` files exported from Carla to `obj` files. It's important to note that when Carla exports fbx files, it does not export materials, so you may need to process materials to some extent.
 
-可能是没梯子的缘故，改用预编译文件
+- ### Dataset Processing
 
-```
-https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/Dev/CARLA_Latest.tar.gz
-```
+  To facilitate dataset processing, we provide some dataset processing scripts.
 
+  `parse2streetsurf_spd_new.py` is used to convert data exported from Carla into training-ready data.
 
+  Currently, it has two modes. When `convert_flag` is `False`, you can place it under the `data` folder and run it to convert the data in the current folder;
 
-### File "generate_traffic.py", line 165, in main     world = client.get_world() RuntimeError: time-out of 10000ms while waiting for the simulator, make sure the simulator is ready and connected to 127.0.0.1:2000
+  When `convert_flag` is `True`, it can recursively convert all data in the current subfolder. Please note that we have not extensively tested this feature, so we **do not** recommend enabling it.
 
-原因：未打开CarlaUE4.sh，
+- ### Data Visualization
 
-解决：打开CarlaUE4.sh，再打开所需.py
+  We also provide data visualization scripts to help visualize some of the data.
 
+  `lidar2ply.py` is used to convert point clouds saved in `npz` format from our dataset into `ply` format for easy viewing;
 
+  `semseg2png.py` is used to convert entity segmentation data saved in `npz` format from our dataset into `png` format for visualization."
 
+我们数据集所需要的所有外部 pip 库已经位于 `requirements.txt` 中。请注意，为了正常使用我们数据集中的所有代码，你必须安装并正确配置 carla，carla 的链接见上方。
 
-
-### Spawn failed because of collision at spawn position
-
-解决：
-
-此消息只是一个警告，某些车辆或某些步行者（在本例中可能是步行者）尚未生成，因为随机位置太靠近另一个步行者之一。所以基本上不用管。
-
-
-
-### Eeception "Disabling core dumps" was thrown while running "./CarlaUE4.sh"
-
-解决：
-
-This is not an error but a message that tells you that core dumps are disabled. This is expected and happens to everyone running Carla with default options.
-
-这不是错误，而是一条消息，告诉您核心转储已禁用，不用管
-
-
-
-### incompatible vulkan driver found
-
-原因:nvidia显卡驱动出问题
-
-解决：[(25条消息) Cannot find a compatible Vulkan driver (ICD). Please look at the Getting Started guide for additiona_DBzs的博客-CSDN博客](https://blog.csdn.net/weixin_43290709/article/details/121737146)
-
-nvidia-smi 查看是否报错，若是重装驱动。
+在使用我们代码时，我们推荐您使用 python 3.7，使用其他版本的 python 可能会带来不兼容的问题。
 
 ```
-报错为
-NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make 
-sure that the latest NVIDIA driver is installed and running. This can also be 
-happening if non-NVIDIA GPU is running as primary display, and NVIDIA GPU is in 
-WDDM mode.
-
+pip3 install -r requirements.txt
 ```
 
-```
-$ sudo apt-get --purge remove nvidia-*
-$ sudo apt autoremove
-$ sudo ubuntu-drivers install
-```
+- ### 坐标系转换
 
+  我们的数据集可能涉及多个坐标系，因此在我们的代码中提供了坐标系转换脚本。
 
+  `fbx2obj_axis.py` 用于将 carla 导出的 fbx 的坐标系转换到我们使用的世界坐标系；
 
-## anoconda
+  `left2right.py` 与 `right2left.py` 用于互相转换左手系与右手系；
 
-1.官网下载https://www.anaconda.com/
+  `carla2obj.py` 与 `obj2carla.py` 用于互相转换我们使用的世界坐标系与 carla 导出的 obj 的坐标系。
 
-2.运行.sh文件
+- ### 数据导出
 
+  我们提供了 `path.txt`，记录了我们数据集中包含的所有路线（注：帧数可能不准确，因为根据路线长度短我们对帧数做了少量调整）；
 
+  我们提供 `export.py`，用于对数据进行导出，运行它时请确保你正确配置了 carla，它会将数据导出至同目录下的 `data/` 中。
 
-```
-conda create -n xxx python=x.x
-conda install -n your_env_name [package]
-```
+  如果需要修改 `export.py` 的路线和帧数，请参见代码的 `341, 353, 423` 行。
 
+  我们提供 `fbx2obj.py`，其功能为将 carla 导出的 `fbx` 文件转换为 `obj` 文件。需要注意，carla 导出 `fbx` 文件时不会导出材质，因此你需要对材质进行一定程度的处理。
 
+- ### 数据集处理
 
+  为了方便对数据集进行处理，我们提供了一些数据集处理脚本。
 
+  其中 `parse2streetsurf_spd_new.py` 用于将从 carla 导出的数据转化成训练用数据。
 
-```
-sudo apt-get update &&
-sudo apt-get install wget software-properties-common &&
-sudo add-apt-repository ppa:ubuntu-toolchain-r/test &&
-wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add - &&
-sudo apt-add-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main" &&
-sudo apt-get update
+  目前其拥有两个模式，在 `convert_flag` 为 `False` 时，将其放置在 `data` 文件夹下并运行即可令其转化当前文件夹中的数据；
 
+  在 `convert_flag` 为 `True` 时，其可以递归转化当前子文件夹下的所有数据。请注意，我们并没有针对该功能进行调试，因此我们不推荐将该选项开启。
 
-sudo apt-get install build-essential clang-8 lld-8 cmake ninja-build libvulkan1 python python-pip python-dev python3-dev python3-pip libpng-dev libtiff5-dev libjpeg-dev tzdata sed curl unzip autoconf libtool rsync libxml2-dev git
+- ### 数据可视化
 
+  我们还提供了数据可视化脚本，便于将部分数据可视化。
 
-sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/lib/llvm-8/bin/clang++ 180 &&
-sudo update-alternatives --install /usr/bin/clang clang /usr/lib/llvm-8/bin/clang 180
+  `lidar2ply.py` 用于将我们数据集中以 `npz` 格式保存的点云转换为 `ply`，便于进行查看；
 
-
-conda create -n carla python=3.7
-conda activate carla
-
-
-pip install --user -Iv setuptools==47.3.1 &&
-pip install --user distro &&
-pip install --user wheel auditwheel
-
-
-pip install --user pygame numpy
-
-
-wget https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/Dev/CARLA_Latest.tar.gz
-
-
-mkdir CARLA
-tar -zxvf CARLA_Latest.tar.gz -C CARLA
-cd CARLA
-./ImportAssets.sh
-
-
-cd ../../.. # 回到根目录
-./CarlaUE4.sh
-
-
-cd PythonAPI/examples
-python -m pip install -r requirements.txt # Support for Python2 is provided
-
-
-
-cd PythonAPI/carla/dist
-ls # 查看python包
-pip install carla-0.9.13-cp37-cp37m-manylinux_2_27_x86_64.whl
-
-```
-
+  `semseg2png.py` 用于将我们数据集中以 `npz` 格式保存的实体分割数据转换为 `png` 便于进行可视化。
