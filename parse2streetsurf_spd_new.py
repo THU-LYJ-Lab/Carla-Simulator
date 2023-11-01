@@ -11,7 +11,7 @@ import cv2
 from tqdm import *
 
 # DO NOT set this to True
-convert_flag = True
+convert_flag = False
 
 # How many frames do the data have
 N_FRAMES = 150

@@ -13,6 +13,8 @@ except IndexError:
 import carla
 import open3d as o3d
 import numpy as np
+from tqdm import *
+
 
 def overall_sensor_callback(sensor_data, disk_path, sensor_queue, sensor_name):
     # if sensor_data.frame % 10 == 11:
@@ -20,8 +22,15 @@ def overall_sensor_callback(sensor_data, disk_path, sensor_queue, sensor_name):
     sensor_queue.put(sensor_name)
 
 def semseg_callback(sensor_data, disk_path, sensor_queue, sensor_name):
-    sensor_data.save_to_disk(disk_path, carla.ColorConverter.CityScapesPalette)
     sensor_queue.put(sensor_name)
+    array = np.frombuffer(sensor_data.raw_data, dtype=np.dtype("uint8"))
+    array = np.reshape(array, (sensor_data.height, sensor_data.width, 4)) 
+    semantic_image = array[:, :, 2]
+    if not os.path.exists(disk_path):
+        os.makedirs(disk_path)
+
+    filename = os.path.join(disk_path, f'semseg_frame_{sensor_data.frame}.npz')
+    np.savez_compressed(filename, arr_0=semantic_image)
 
 sensor_queue = Queue()
 
@@ -280,12 +289,32 @@ class SensorManager(object):
         semseg_bp.set_attribute('image_size_x', '1920')
         semseg_bp.set_attribute('image_size_y', '1080')
         semseg_bp.set_attribute('fov', '110')
+
         semseg_transform = carla.Transform(carla.Location(x=1.5, z=2.4))
         self.semseg_front = self.world.spawn_actor(semseg_bp, semseg_transform, attach_to=self.car.ego_vehicle)
-        # set the callback function
-        self.semseg_front.listen(lambda image: semseg_callback(image, 'data/semseg/front/%.6d.jpg' % image.frame, sensor_queue, 'front semseg'))
-        # self.semseg_front.listen(lambda image: image.save_to_disk('data/semseg/front/%.6d.jpg' % image.frame,carla.ColorConverter.CityScapesPalette))
-        # sensor_queue.put('front semseg')
+        self.semseg_front.listen(lambda image: semseg_callback(image, 'data/semseg/front', sensor_queue, 'front semseg'))
+
+        semseg_transform = carla.Transform(carla.Location(x=1.5, y=0.5, z=2.4), carla.Rotation(pitch=-15, yaw=-45))
+        self.semseg_front_left = self.world.spawn_actor(semseg_bp, semseg_transform, attach_to=self.car.ego_vehicle)
+        self.semseg_front_left.listen(lambda image: semseg_callback(image, 'data/semseg/front_left', sensor_queue, 'front_left semseg'))
+    
+        semseg_transform = carla.Transform(carla.Location(x=1.5, y=-0.5, z=2.4), carla.Rotation(pitch=-15, yaw=45))
+        self.semseg_front_right = self.world.spawn_actor(semseg_bp, semseg_transform, attach_to=self.car.ego_vehicle)
+        self.semseg_front_right.listen(lambda image: semseg_callback(image, 'data/semseg/front_right' , sensor_queue, 'front_right semseg'))
+    
+    
+        semseg_transform = carla.Transform(carla.Location(x=-1.5, z=2.4),carla.Rotation(yaw=180))
+        self.semseg_back = self.world.spawn_actor(semseg_bp, semseg_transform, attach_to=self.car.ego_vehicle)
+        self.semseg_back.listen(lambda image: semseg_callback(image, 'data/semseg/back', sensor_queue, 'back semseg'))
+    
+        semseg_transform = carla.Transform(carla.Location(x=-1.5, y=0.5, z=2.4), carla.Rotation(pitch=-15, yaw=-135))
+        self.semseg_back_left = self.world.spawn_actor(semseg_bp, semseg_transform, attach_to=self.car.ego_vehicle)
+        self.semseg_back_left.listen(lambda image: semseg_callback(image, 'data/semseg/back_left', sensor_queue, 'back_left semseg'))
+    
+        semseg_transform = carla.Transform(carla.Location(x=-1.5, y=-0.5, z=2.4), carla.Rotation(pitch=-15, yaw=135))
+        self.semseg_back_right = self.world.spawn_actor(semseg_bp, semseg_transform, attach_to=self.car.ego_vehicle)
+        self.semseg_back_right.listen(lambda image: semseg_callback(image, 'data/semseg/back_right' , sensor_queue, 'back_right semseg'))
+    
 
 
 
@@ -308,9 +337,24 @@ class CarManager(object):
         self.ego_vehicle_bp = blueprint_library.find('vehicle.audi.a2')
         self.ego_vehicle_bp.set_attribute('color', '0, 0, 0')
         # transform = random.choice(world.get_map().get_spawn_points())
-        transform = carla.Transform(carla.Location(x = 55.54242706298828, y = 306.1947021484375, z = 0.21863333880901337), carla.Rotation(yaw=-0.3095703125))
+
+        route_points = [
+            carla.Location(x=-10720.137695 / 100,y=4767.460938 / 100,z=0.028904 / 100),
+            carla.Location(x=-8567.087891 / 100,y=-5815.140625 / 100,z=0.031303 / 100),
+            carla.Location(x=-1833.783081 / 100,y=-6109.631836 / 100,z=0.033791 / 100),
+            carla.Location(x=10303.618164 / 100,y=-928.721436 / 100,z=0.026878 / 100)
+
+            #carla.Location(x=-5834.045410/100,y=-19472.632812/100,z=0.331562/100) 
+            # carla.Location(x=-6193.812012 / 100.0,y=-329.354614 / 100.0,z=0.324142 / 100.0),
+            # carla.Location(x=2197.394775 / 100,y=644.150940 / 100,z=-0.098522 / 100),
+            # carla.Location(x=8820.413086 / 100,y=31295.304688 / 100,z=0.033731 / 100),
+        ]
+        
+        transform = carla.Transform(carla.Location(x=-10720.137695 / 100,y=4767.460938 / 100,z=0.028904 / 100) , carla.Rotation(pitch=-0.004979,yaw=-89.129425,roll=-0.000840))
         self.ego_vehicle = self.world.spawn_actor(self.ego_vehicle_bp, transform)
         self.ego_vehicle.set_autopilot(True, traffic_manager.get_port())
+        traffic_manager.ignore_lights_percentage(self.ego_vehicle,100)
+        traffic_manager.set_path(self.ego_vehicle, route_points)
         world.tick()
 
 def output_rotate_matrix(transform_front, s, file_path):
@@ -345,20 +389,42 @@ def main():
         traffic_manager.set_global_distance_to_leading_vehicle(2.5)
         traffic_manager.set_hybrid_physics_mode(True)
         traffic_manager.set_synchronous_mode(True)
-        
+        traffic_manager.set_random_device_seed(233)
+
         settings = world.get_settings()
         settings.synchronous_mode = True
         settings.fixed_delta_seconds = 0.1  # 设置固定帧率
         world.apply_settings(settings)
 
+        # print(world.get_weather())
+
+        weather = carla.WeatherParameters(
+            cloudiness=10.000000, 
+            precipitation=0.000000, 
+            precipitation_deposits=0.000000, 
+            wind_intensity=10.000000, 
+            sun_azimuth_angle=250.000000, 
+            sun_altitude_angle=30.000000, 
+            fog_density=10.000000, 
+            fog_distance=60.000000, 
+            fog_falloff=0.900000, 
+            wetness=0.000000, 
+            scattering_intensity=1.000000, 
+            mie_scattering_scale=0.030000, 
+            rayleigh_scattering_scale=0.033100, 
+            dust_storm=0.000000
+        )
+
+        world.set_weather(weather)
+
         car = CarManager(world, traffic_manager)
         sensor = SensorManager(world, car)
         
-        frame_count=10
+        frame_count=1000
         f_id = 0
 
-        for _ in range(frame_count):
-            print("frame #%d" % f_id)
+        for _ in tqdm(range(frame_count)):
+            # print("frame #%d" % f_id)
             f_id += 1
             world.tick()
 
@@ -370,13 +436,15 @@ def main():
             rotation=camera_pose.rotation
             R=rotation_matrix_from_euler(rotation)
             pose=np.hstack((R,np.array([[x],[y],[z]])))
+            try:
+                os.makedirs('data/poses')
             with open('data/poses/rgb_cam2world_5_%d.txt'%f_id,'w') as f:
                 print(pose,file=f)
 
             try:
-                for i in range(18):
+                for i in range(23):
                     s_name = sensor_queue.get(True, 5.0)
-                    print("receiving data from %s" % s_name)
+                    # print("receiving data from %s" % s_name)
 
             except Empty:
                 print("some sensor data are missing!")
@@ -393,6 +461,8 @@ def main():
             [0, f, c_y],
             [0, 0, 1]
         ])
+        try:
+            os.makedirs('data/calib')
         with open('data/calib/rgb_intrinsics.txt','w') as f:
             print(K,file=f)
 
@@ -409,6 +479,9 @@ def main():
 
         print('###', sensor.camera_front.get_transform())
 
+        try:
+            os.makedirs('data/calib/cams')
+
         transform_front = sensor.camera_front.get_transform()
         output_rotate_matrix(transform_front, sensor.camera_back_right, "data/calib/cams/rgb_cam2cam_0.txt")
         output_rotate_matrix(transform_front, sensor.camera_back_left, "data/calib/cams/rgb_cam2cam_1.txt")
@@ -423,6 +496,9 @@ def main():
         ## 2 - Rear LiDAR
         ## 3 - Front LiDAR
         ## 4 - Top LiDAR
+
+        try:
+            os.makedirs('data/calib/lidars')
 
         output_rotate_matrix(transform_front, sensor.right_lidar, "data/calib/lidars/lidar_sensor2cam_0.txt")
         output_rotate_matrix(transform_front, sensor.left_lidar, "data/calib/lidars/lidar_sensor2cam_1.txt")
