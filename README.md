@@ -14,7 +14,7 @@
 
 3. Open the CARLA simulator, choose one of the cities, load it, and then click "Run" in the top right corner. Here, we will use Town02 as an example.
 
-   ![fig1](imgs\fig1.png)
+   ![fig1](imgs/fig1.png)
 
 4. In the `path.txt` of our codebase, select a path (you can also define your own path), and modify `export/export_car_manager.py` with the `route_points` and `transform`. Set `route_points` to the coordinates of all points along the path, and set `transform` to the coordinates and rotation corresponding to the starting point. For example, if we choose the `Town_02 300frames` path, the modified code snippet should look like this:
 

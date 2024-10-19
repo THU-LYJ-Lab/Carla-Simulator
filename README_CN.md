@@ -14,7 +14,7 @@
 
 3. 打开 CARLA 模拟器，选择其中一座城市，打开它，随后点击右上角的运行。这里我们以 Town02 为例。
 
-   ![fig1](imgs\fig1.png)
+   ![fig1](imgs/fig1.png)
 
 4. 在我们代码库的 `path.txt` 中选择一条路径（您也可以自行制定路径），修改 `export/export_car_manager.py` 中的 `route_points` 与 `transform`。将 `route_points` 修改为路径上所有点的坐标，将 `transform` 设置为起点对应的坐标与旋转。例如我们选择了 `Town_02 300frames` 路径，修改后的代码片段应该如下：
 
