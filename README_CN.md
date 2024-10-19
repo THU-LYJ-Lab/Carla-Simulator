@@ -1,26 +1,58 @@
-## Carla
+## SS3DM 代码库
 
-[官方文档](http://carla.org/)
+[我们的论文]()，我们基于 CARLA 进行数据导出，CARLA 的官方文档：[官方文档](http://carla.org/)
 
-## 代码使用方法
+## 快速上手
 
-我们数据集所需要的所有外部 pip 库已经位于 `requirements.txt` 中。请注意，为了正常使用我们数据集中的所有代码，你必须安装并正确配置 carla，carla 的链接见上方。
+1. 安装并配置 CARLA，安装 CARLA 的 python 库，请参见 CARLA 的[官方文档](http://carla.org/)。我们推荐您使用 python 3.7
 
-在使用我们代码时，我们推荐您使用 python 3.7，使用其他版本的 python 可能会带来不兼容的问题。
+2. 安装代码使用的前置库
 
-```
-pip3 install -r requirements.txt
-```
+   ```
+   pip3 install -r requirements.txt
+   ```
+
+3. 打开 CARLA 模拟器，选择其中一座城市，打开它，随后点击右上角的运行。这里我们以 Town02 为例。
+
+   ![fig1](imgs\fig1.png)
+
+4. 在我们代码库的 `path.txt` 中选择一条路径（您也可以自行制定路径），修改 `export/export_car_manager.py` 中的 `route_points` 与 `transform`。将 `route_points` 修改为路径上所有点的坐标，将 `transform` 设置为起点对应的坐标与旋转。例如我们选择了 `Town_02 300frames` 路径，修改后的代码片段应该如下：
+
+   ```python
+   		route_points = [
+               carla.Location(x=4610.736328 / 100,y=28746.634766 / 100,z=22.363468 / 100),
+               carla.Location(x=4589.283203 / 100,y=20432.091797 / 100,z=22.353996 / 100)
+           ]
+           
+           transform = carla.Transform(carla.Location(x=4610.736328 / 100,y=28746.634766 / 100,z=22.363468 / 100), carla.Rotation(pitch=0.025818,yaw=-89.975494,roll=0.000184))
+           
+   ```
+
+5. 修改 `export/export.py` 中的 `frame_count` 至想要导出的帧数，在这个例子中为 300 帧。该变量默认位于代码的 114 行。
+
+6. 运行 `export/export.py`，等待导出完成。数据会被导出至 `export.py` 所在的路径下。
+
+7. （可选）如果需要将数据处理成 Streetsurf 格式，则将 `data_processing` 中的 `parse2streetsurf.py` 复制到导出数据的 `data/` 目录下，运行即可转换数据格式。
+
+## 导出数据的默认组织模式
+
+默认情况下，导出的数据 `data/` 会有 8 个文件夹，每个文件夹以及内部存放的数据含义如下：
+
+- `depths` 文件夹存放深度相机拍摄的深度数据，数据以 `exr` 格式存储，深度相机的具体参数请参见我们的论文。每一帧的数据与 RGB 相机对齐。
+- `images` 文件夹存放 RGB 相机拍摄的图像数据。
+- `insseg` 文件夹存放实体标注相机的实体标注数据，图中的每种不同颜色代表一个不同的实体。同一实体在不同相机的不同帧中的颜色是相同的。每一帧的数据与 RGB 相机对齐。
+- `lidars` 文件夹存放 LiDAR 的点云数据，数据以 `npz` 格式存储，具体参数请参见我们的论文或是参考 `lidar2ply.py` 脚本。
+- `poses` 文件夹存放每一帧相机的位置信息，包含 `5` 号相机（前置相机）到世界坐标系的旋转矩阵以及不同相机到前置相机的旋转矩阵。
+- `semseg` 文件夹存放语义分割相机的图像数据，颜色对应的语义请参考 CARLA 官方文档。每一帧的数据与 RGB 相机对齐。
+- `vehicles` 与 `walkers` 存放其他车辆与行人的信息。该部分的信息处理目前尚未完善，将在后续的更新中补充。
+
+## 代码具体功能讲解
 
 - ### 坐标系转换
 
   我们的数据集可能涉及多个坐标系，因此在我们的代码中提供了坐标系转换脚本，这些脚本位于 `coord_transform` 文件夹下。
 
-  `fbx2obj_axis.py` 用于将 carla 导出的 fbx 的坐标系转换到我们使用的世界坐标系；
-
-  `left2right.py` 与 `right2left.py` 用于互相转换左手系与右手系；
-
-  `carla2obj.py` 与 `obj2carla.py` 用于互相转换我们使用的世界坐标系与 carla 导出的 obj 的坐标系。
+  `fbx2obj_axis.py` 用于将 carla 导出的 fbx 文件（转成 `obj` 文件后）的坐标系转换到我们使用的世界坐标系。
 
 - ### 数据导出
 

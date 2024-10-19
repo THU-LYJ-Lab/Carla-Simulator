@@ -1,101 +1,84 @@
-## Carla Simulator
+## SS3DM Codebase
 
-[Official Document](http://carla.org/)
+[Our paper]() describes our data export based on CARLA. For more information, see the official CARLA documentation: [Official Documentation](https://carla.readthedocs.io/en/latest/).
 
-## Usage
+## Quick Start
 
-All the external Python libraries required for our dataset are listed in requirements.txt. Please note that to use all the code in our dataset, you must install and configure Carla. The link can be found above.
+1. Install and configure CARLA. For installing CARLA's Python library, refer to the [official documentation](https://carla.readthedocs.io/en/latest/). We recommend using Python 3.7.
 
-When using our code, we recommend using Python 3.7 as using other versions of Python may lead to compatibility issues.
+2. Install the prerequisite libraries used in the code.
 
-```
-pip3 install -r requirements.txt
-```
+   ```bash
+   pip3 install -r requirements.txt
+   ```
 
-- ### Coordinate Transformations
+3. Open the CARLA simulator, choose one of the cities, load it, and then click "Run" in the top right corner. Here, we will use Town02 as an example.
 
-  Our dataset may involve multiple coordinate systems, so we provide coordinate conversion scripts in our code, located in the `coord_transform` folder.
+   ![fig1](imgs\fig1.png)
 
-  `fbx2obj_axis.py` is used to convert the coordinate system of FBX files exported from CARLA to our world coordinate system.
+4. In the `path.txt` of our codebase, select a path (you can also define your own path), and modify `export/export_car_manager.py` with the `route_points` and `transform`. Set `route_points` to the coordinates of all points along the path, and set `transform` to the coordinates and rotation corresponding to the starting point. For example, if we choose the `Town_02 300frames` path, the modified code snippet should look like this:
 
-  `left2right.py` and `right2left.py` are used to convert between left-handed and right-handed coordinate systems.
+   ```python
+   route_points = [
+       carla.Location(x=4610.736328 / 100, y=28746.634766 / 100, z=22.363468 / 100),
+       carla.Location(x=4589.283203 / 100, y=20432.091797 / 100, z=22.353996 / 100)
+   ]
+   
+   transform = carla.Transform(carla.Location(x=4610.736328 / 100, y=28746.634766 / 100, z=22.363468 / 100), carla.Rotation(pitch=0.025818, yaw=-89.975494, roll=0.000184))
+   ```
 
-  `carla2obj.py` and `obj2carla.py` are used to convert between our world coordinate system and the OBJ coordinate system exported from CARLA.
+5. Modify the `frame_count` in `export/export.py` to the desired number of frames, which in this example is 300 frames. This variable is located at line 114 of the code.
+
+6. Run `export/export.py` and wait for the export to complete. The data will be exported to the directory where `export.py` is located.
+
+7. (Optional) If you need to convert the data to Streetsurf format, copy `parse2streetsurf.py` from `data_processing` to the exported data's `data/` directory and run it to convert the data format.
+
+## Default Organization of Exported Data
+
+By default, the exported data in `data/` will contain 8 folders, each storing the following types of data:
+
+- The `depths` folder contains depth data captured by the depth camera, stored in `exr` format. For specific parameters of the depth camera, please refer to our paper. Each frame's data is aligned with the RGB camera.
+- The `images` folder contains image data captured by the RGB camera.
+- The `insseg` folder contains instance segmentation data from the instance annotation camera, where each color in the image represents a different entity. The same entity will have the same color across different frames from different cameras. Each frame's data is aligned with the RGB camera.
+- The `lidars` folder contains point cloud data from the LiDAR, stored in `npz` format. For specific parameters, please refer to our paper or the `lidar2ply.py` script.
+- The `poses` folder contains the positional information for each frame's camera, including the rotation matrix from Camera 5 (front camera) to the world coordinate system and the rotation matrices from different cameras to the front camera.
+- The `semseg` folder contains image data from the semantic segmentation camera; refer to the CARLA official documentation for the semantic meanings corresponding to colors. Each frame's data is aligned with the RGB camera.
+- The `vehicles` and `walkers` folders contain information about other vehicles and pedestrians. This section of the information is not yet fully processed and will be supplemented in future updates.
+
+## Explanation of Code Functionality
+
+- ### Coordinate System Conversion
+
+  Our dataset may involve multiple coordinate systems; therefore, we provide coordinate transformation scripts located in the `coord_transform` folder.
+
+  `fbx2obj_axis.py` is used to convert the coordinate system of the fbx files exported from CARLA (after being converted to `obj` files) to the world coordinate system we use.
 
 - ### Data Export
 
-  Scripts related to data export are located in the `export` folder.
+  The scripts related to data export are located in the `export` folder.
 
-  We provide `path.txt`, which records all the routes included in our dataset (note: the frame count may not be accurate, as we made minor adjustments to the frame count based on the length of the routes).
+  We provide `path.txt`, which records all routes included in our dataset (Note: the frame count may not be accurate, as we made minor adjustments based on the route length);
 
-  We provide `export.py` for data export. Make sure CARLA is configured correctly when running this script, and it will export data to the `data/` folder in the same directory.
+  We provide `export.py` for exporting data. When running it, please ensure that you have correctly configured CARLA, and it will export the data to the `data/` folder in the same directory.
 
-  If you need to modify the routes and frame count in `export.py`, please edit `export_car_managet.py` and adjust the `frame_count` in `export.py`.
+  If you need to modify the route and frame count in `export.py`, please edit `export_car_manager.py` and change `frame_count` in `export.py`.
 
-  We provide `fbx2obj.py`, located in the `misc` folder, which converts FBX files exported from CARLA to OBJ files. Please note that when exporting FBX files from CARLA, materials are not exported, so you will need to process the materials accordingly.
+  We provide `fbx2obj.py`, located in the `misc` folder. This script converts the `fbx` files exported from CARLA to `obj` files. Please note that CARLA does not export materials when exporting `fbx` files, so you will need to handle the materials to some extent.
 
 - ### Data Processing
 
-  To facilitate the processing of the dataset, we provide a data processing script located in the `misc` folder.
+  To facilitate the processing of the dataset, we provide data processing scripts located in the `misc` folder.
 
-  `parse2streetsurf.py` is used to convert data exported from CARLA into training data, following the same format used by Streetsurf.
+  `parse2streetsurf.py` is used to convert data exported from CARLA into training data formatted like Streetsurf.
 
-  It currently has two modes. When `convert_flag` is set to `False`, place it in the `data` folder and run it to convert the data in the current folder.
+  Currently, it has two modes: when `convert_flag` is `False`, place it in the `data` folder and run it to convert the data in the current folder;
 
-  When `convert_flag` is set to `True`, it can recursively convert all data in the current subfolders. Please note that this functionality has not been tested, so we do not recommend enabling this option.
+  When `convert_flag` is `True`, it can recursively convert all data in the current subfolder. Please note that we have not debugged this functionality, so we do not recommend enabling this option.
 
 - ### Data Visualization
 
-  We also provide data visualization scripts to facilitate the visualization of certain data. These scripts are located in the `misc` folder.
+  We also provide data visualization scripts to help visualize some of the data, located in the `misc` folder.
 
-  `lidar2ply.py` converts point cloud data saved in `npz` format from our dataset into `ply` format for easier viewing.
+  `lidar2ply.py` is used to convert point clouds stored in `npz` format in our dataset to `ply` format for easier viewing;
 
-  `semseg2png.py` converts semantic segmentation data saved in `npz` format from our dataset into `png` format for visualization.
-
-我们数据集所需要的所有外部 pip 库已经位于 `requirements.txt` 中。请注意，为了正常使用我们数据集中的所有代码，你必须安装并正确配置 carla，carla 的链接见上方。
-
-在使用我们代码时，我们推荐您使用 python 3.7，使用其他版本的 python 可能会带来不兼容的问题。
-
-```
-pip3 install -r requirements.txt
-```
-
-- ### 坐标系转换
-
-  我们的数据集可能涉及多个坐标系，因此在我们的代码中提供了坐标系转换脚本，这些脚本位于 `coord_transform` 文件夹下。
-
-  `fbx2obj_axis.py` 用于将 carla 导出的 fbx 的坐标系转换到我们使用的世界坐标系；
-
-  `left2right.py` 与 `right2left.py` 用于互相转换左手系与右手系；
-
-  `carla2obj.py` 与 `obj2carla.py` 用于互相转换我们使用的世界坐标系与 carla 导出的 obj 的坐标系。
-
-- ### 数据导出
-
-  数据导出相关脚本位于 `export` 文件夹下。
-
-  我们提供了 `path.txt`，记录了我们数据集中包含的所有路线（注：帧数可能不准确，因为根据路线长度短我们对帧数做了少量调整）；
-
-  我们提供 `export.py`，用于对数据进行导出，运行它时请确保你正确配置了 carla，它会将数据导出至同目录下的 `data/` 中。
-
-  如果需要修改 `export.py` 的路线和帧数，请修改 `export_car_managet.py` 并修改 `export.py` 中的 `frame_count`。
-
-  我们提供 `fbx2obj.py`，该脚本位于 `misc` 文件夹下。其功能为将 carla 导出的 `fbx` 文件转换为 `obj` 文件。需要注意，carla 导出 `fbx` 文件时不会导出材质，因此你需要对材质进行一定程度的处理。
-
-- ### 数据处理
-
-  为了方便对数据集进行处理，我们提供了数据处理脚本，这个脚本位于 `misc` 文件夹下。
-
-  其中 `parse2streetsurf.py` 用于将从 carla 导出的数据转化成训练用数据，训练数据使用的格式与 Streetsurf 相同。
-
-  目前其拥有两个模式，在 `convert_flag` 为 `False` 时，将其放置在 `data` 文件夹下并运行即可令其转化当前文件夹中的数据；
-
-  在 `convert_flag` 为 `True` 时，其可以递归转化当前子文件夹下的所有数据。请注意，我们并没有针对该功能进行调试，因此我们不推荐将该选项开启。
-
-- ### 数据可视化
-
-  我们还提供了数据可视化脚本，便于将部分数据可视化，这些脚本位于 `misc` 文件夹下。
-
-  `lidar2ply.py` 用于将我们数据集中以 `npz` 格式保存的点云转换为 `ply`，便于进行查看；
-
-  `semseg2png.py` 用于将我们数据集中以 `npz` 格式保存的实体分割数据转换为 `png` 便于进行可视化。
+  `semseg2png.py` is used to convert instance segmentation data stored in `npz` format in our dataset to `png` format for visualization.
