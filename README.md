@@ -1,6 +1,20 @@
-## SS3DM Codebase
+## SS3DM Exporter Codebase
 
-[Our paper]() describes our data export based on CARLA. For more information, see the official CARLA documentation: [Official Documentation](https://carla.readthedocs.io/en/latest/).
+[Our paper](https://arxiv.org/abs/2410.21739) describes our data export based on CARLA. For more information, see the official CARLA documentation: [Official Documentation](https://carla.readthedocs.io/en/latest/).
+
+[[`HomePage`](https://ss3dm.top/)][`Paper`](https://arxiv.org/abs/2410.21739)][`Data Download`: [`GoogleDrive`](https://drive.google.com/drive/folders/1-0xeAUYR6PicWK9eWmslVii3jGtyhL8Z) [`HuggingFace`](https://huggingface.co/datasets/SS3DM/SS3DM-Dataset/tree/main)]
+
+
+> SS3DM: Benchmarking Street-View Surface Reconstruction with a Synthetic 3D Mesh Dataset <br>
+[Yubin Hu*](https://github.com/AlbertHuyb), Kairui Wen*, Heng Zhou, [Xiaoyang Guo](https://xy-guo.github.io/), Yong-Jin Liu <br>
+NeurIPS 2024 Track on Dataset and Benchmark
+
+## News
+🌟 [2024/11/07] We've uploaded the data to [GoogleDrive](https://drive.google.com/drive/folders/1-0xeAUYR6PicWK9eWmslVii3jGtyhL8Z) and [HuggingFace](https://huggingface.co/SS3DM)!
+
+🥳 [2024/09/26] Our [paper](https://arxiv.org/abs/2410.21739) is accepted by NeurIPS 2024 Track on Dataset and Benchmark.
+
+
 
 ## Quick Start
 
